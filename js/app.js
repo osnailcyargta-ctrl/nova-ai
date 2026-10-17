@@ -52,24 +52,30 @@
     if (ui.persona === "CUSTOM") return "[P:CUSTOM: " + (ui.customText || "a friendly assistant") + "]";
     return PERSONAS[ui.persona].tag;
   }
+  function turnTag() {
+    if (ui.persona === "FAKE_SMILE") return "A [FS]:";
+    if (ui.persona === "SIGMA") return "A [SG]:";
+    const words = (ui.customText || "a friendly assistant").split(/\s+/).slice(0, 3).join(" ");
+    return "A [CU: " + words + "]:";
+  }
 
   // ---------- prompt building ----------
   function buildPrompt(userMsg) {
     const c = conv();
-    let hist = "";
-    const turns = [];
+    const tt = turnTag();
+    const lines = [];
     for (const m of c.messages) {
-      turns.push((m.role === "user" ? "U: " : "A: ") + m.text);
+      if (m.role === "user") lines.push("U: " + m.text);
+      else lines.push(m.aprefix || ("A [SG]: " + m.text));
     }
-    if (userMsg != null) turns.push("U: " + userMsg);
-    // trim from the left: keep prompt under ~230 chars after tag line
+    if (userMsg != null) lines.push("U: " + userMsg);
     let body = "";
-    for (let i = turns.length - 1; i >= 0; i--) {
-      const cand = turns[i] + "\n" + body;
-      if (cand.length > 230 && body) break;
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const cand = lines[i] + "\n" + body;
+      if (cand.length > 250 && body) break;
       body = cand;
     }
-    return "\n\n" + personaTag() + "\n" + body + "A:";
+    return "\n\n" + personaTag() + "\n" + body + tt;
   }
 
   // ---------- model ----------
@@ -237,8 +243,8 @@
       game = gm[1];
       text = text.replace(/\[\[GAME:[A-Z0-9]+\]\]/g, "").trim();
     }
-    text = text.replace(/^A:\s*/i, "").trim();
-    c.messages.push({ role: "ai", text: text || "...", model: model.cfg.name, tps: Math.round((acc.length || 1) / Math.max(dt, 0.001)), game });
+    text = text.replace(/^A(\s*\[[^\]]*\])?:\s*/i, "").trim();
+    c.messages.push({ role: "ai", text: text || "...", model: model.cfg.name, tps: Math.round((acc.length || 1) / Math.max(dt, 0.001)), game, aprefix: turnTag() + " " + (text || "...") });
     touch();
     renderChat();
   }
