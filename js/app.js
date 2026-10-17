@@ -16,7 +16,7 @@
 
   // ---------- state ----------
   let store = { convs: {}, order: [], active: null };
-  let ui = { model: "17m", persona: "SIGMA", customText: "", theme: null, temp: 0.85, maxNew: 190 };
+  let ui = { model: "17m", persona: "SIGMA", customText: "", theme: null, temp: 0.55, maxNew: 190 };
   let current = { model: null, loading: false };
   let generating = false, genAbort = false;
   try {
@@ -209,7 +209,7 @@
       await NovaLM.generate(
         model,
         prompt,
-        { temp: ui.temp, topK: 40, maxNew: ui.maxNew, repPenalty: 0.35 },
+        { temp: ui.temp, topK: 28, maxNew: ui.maxNew, repPenalty: 0.35 },
         (ch, outAll) => {
           acc = outAll;
           const now = performance.now();
@@ -228,7 +228,7 @@
     if (!text && !genAbort) {
       // one retry with more heat
       try {
-        await NovaLM.generate(model, prompt, { temp: Math.min(1.2, ui.temp + 0.15), topK: 60, maxNew: ui.maxNew }, (ch, outAll) => (acc = outAll), () => genAbort);
+        await NovaLM.generate(model, prompt, { temp: Math.min(1.1, ui.temp + 0.15), topK: 40, maxNew: ui.maxNew }, (ch, outAll) => (acc = outAll), () => genAbort);
         text = acc.trim();
       } catch (e) {}
     }
