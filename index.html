@@ -2,25 +2,116 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Nova — AI from scratch</title>
-<style>
-  body { margin:0; height:100vh; display:flex; align-items:center; justify-content:center;
-         font-family: system-ui, sans-serif; background:#0f0f10; color:#e4e4e7; }
-  .box { text-align:center; }
-  .ring { width:54px; height:54px; border:3px solid #3f3f46; border-top-color:#a1a1aa;
-          border-radius:50%; margin:0 auto 22px; animation:spin 1s linear infinite; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  h1 { font-size:22px; font-weight:600; letter-spacing:.3px; }
-  p { color:#71717a; font-size:14px; line-height:1.6; max-width:420px; }
-</style>
+<meta name="description" content="Nova: a 17M-parameter transformer trained completely from scratch, running 100% in your browser.">
+<meta name="theme-color" content="#0f0f10">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-64.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-  <div class="box">
-    <div class="ring"></div>
-    <h1>Nova is training</h1>
-    <p>A 17M-parameter transformer, built and trained completely from scratch.<br>
-       The lab is still running — come back soon.</p>
+<div class="loadbar-wrap" id="loadwrap" style="display:none"><div class="loadbar" id="loadbar"></div></div>
+
+<div class="app">
+  <!-- ===== sidebar ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <div class="logo">N</div>
+      <div class="brand">Nova<small>transformer · from scratch</small></div>
+    </div>
+    <button class="btn-new" id="new-chat"><span>+</span> New chat</button>
+    <div class="conv-list" id="conv-list"></div>
+
+    <div class="side-sec">Persona</div>
+    <div class="seg" id="persona-seg">
+      <button data-p="FAKE_SMILE"><span class="dot fs"></span>Fake Smile</button>
+      <button data-p="SIGMA"><span class="dot sg"></span>Real Sigma</button>
+      <button data-p="CUSTOM"><span class="dot cs"></span>Custom</button>
+    </div>
+
+    <div class="side-sec">Model (all trained from zero)</div>
+    <div class="model-grid" id="model-grid"></div>
+
+    <div class="side-foot">
+      <button class="icon-btn" id="theme-btn" title="Toggle theme">&#9789;</button>
+      <button class="icon-btn" id="install-btn" title="Install app" style="display:none">&#8681;</button>
+      <button class="icon-btn" id="settings-btn" title="Settings">&#9881;</button>
+      <button class="icon-btn" id="about-btn" title="About the model">i</button>
+      <div class="foot-note">no API &middot; no server<br>weights run in your browser</div>
+    </div>
+  </aside>
+
+  <!-- ===== main ===== -->
+  <main class="main">
+    <div class="topbar">
+      <button class="icon-btn hamb" id="hamb">&#9776;</button>
+      <div class="title" id="chat-title">New chat</div>
+      <span class="pill" id="pill-persona">Real Sigma</span>
+      <span class="pill" id="pill-model">Nova-17M</span>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome" style="display:flex">
+        <div class="big-logo">N</div>
+        <h1>Meet Nova</h1>
+        <p>A real transformer — <b>trained completely from scratch</b>, no GPT, no API.
+           It runs entirely in your browser as pure JavaScript.<br>
+           Pick a persona, chat, and don't be afraid to ask for a game.</p>
+        <div class="chips" id="chips"></div>
+      </div>
+    </div>
+
+    <div class="composer">
+      <div class="comp-inner">
+        <textarea id="input" rows="1" placeholder="Message Nova..."></textarea>
+        <button class="send" id="send" title="Send">&#8593;</button>
+      </div>
+      <div class="hint">Nova is a tiny 17M-parameter model — it will make mistakes, and that's part of the charm. Sigma judges. Fake Smile agrees.</div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== modals ===== -->
+<div class="overlay" id="custom-modal">
+  <div class="modal">
+    <h3>Custom persona</h3>
+    <p>Describe the personality in plain English. The model was trained to follow persona descriptions.</p>
+    <textarea id="custom-text" placeholder="e.g. a grumpy pirate who hates mornings but gives solid advice"></textarea>
+    <div class="row">
+      <button id="custom-cancel">Cancel</button>
+      <button id="custom-save" class="primary">Use persona</button>
+    </div>
   </div>
+</div>
+
+<div class="overlay" id="settings-modal">
+  <div class="modal">
+    <h3>Generation settings</h3>
+    <label>Temperature <span id="temp-val">0.85</span></label>
+    <input type="range" id="temp" min="0.5" max="1.2" step="0.05">
+    <label>Max response length <span id="maxnew-val">190</span></label>
+    <input type="range" id="maxnew" min="100" max="260" step="10">
+    <div class="row"><button id="settings-close" class="primary">Done</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="about-modal">
+  <div class="modal">
+    <h3>About this model</h3>
+    <div id="about-body"></div>
+    <p style="margin-top:12px">Every weight was produced by training on a corpus of conversations generated
+      from scratch for this project. Checkpoints were pushed at 2M, 5M, 10M and 17M parameters.
+      No pre-trained model, dataset, or API was used anywhere.</p>
+    <div class="row"><button id="about-close" class="primary">Close</button></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="./js/model.js"></script>
+<script src="./js/games.js"></script>
+<script src="./js/app.js"></script>
 </body>
 </html>
